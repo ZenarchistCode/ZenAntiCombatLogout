@@ -1,0 +1,5 @@
+enum ZenAntiCombatRPCs
+{
+	ANTI_COMBAT_LOG_RPC = 13761990,
+	ANTI_COMBAT_LOG_MSG_RPC
+}

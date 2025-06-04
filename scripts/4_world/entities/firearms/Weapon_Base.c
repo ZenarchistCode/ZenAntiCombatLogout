@@ -1,21 +1,25 @@
-// (Client-side) Detects when the player shoots at another player and informs the server.
-// I do this client-side because otherwise all these raycasts are likely to affect server performance.
+//! WEAPON ENGRAVE
 modded class Weapon_Base
 {
 	// Used to temporarily disable gunshot RPC's to prevent spamming the server with mag dumps
-	bool m_PauseCombatRPC = false;
-	static const float RPC_DELAY_TIMER = 3000;
+	bool m_ZenPauseCombatRPC = false;
+	static const float ZRPC_DELAY_TIMER = 3000;
 
 	// Set default weapon combat log trigger distance
 	float GetAntiCombatLogWeaponDistance()
 	{
-		return 1000;
+		return 250;
 	}
 
 	// Detect gun fired
 	override void OnFire(int muzzle_index)
 	{
 		super.OnFire(muzzle_index);
+
+		#ifdef ZENMODPACK
+		if (!ZenModEnabled("ZenAntiCombatLogout"))
+			return;
+		#endif
 
 		// Don't run raycast on server, probably too resource intensive especially for mag dumps. Run raycast on client instead and RPC server when a player is detected
 		#ifdef SERVER
@@ -32,14 +36,14 @@ modded class Weapon_Base
 		#endif
 
 		// Check on next frame if a player was shot at
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DetectPlayerShot, 1, false);
+		GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(DetectPlayerShot, 1, false);
 	}
 
 	// Detect if a player was shot at
 	private void DetectPlayerShot()
 	{
 		// Check if we sent a gunshot RPC in the past 3 secs, if so, stop here to avoid spamming the server
-		if (m_PauseCombatRPC)
+		if (m_ZenPauseCombatRPC)
 			return;
 
 		// If weapon is not fired by our player, stop here.
@@ -109,7 +113,7 @@ modded class Weapon_Base
 						continue;
 
 					ZenFunctions.DebugMessage("ENTITY=" + entity.GetType());
-					 //END DEBUG */ 
+					//END DEBUG */ 
 
 					// Skip any objects that are not human
 					if ((results[i].obj && !results[i].obj.IsMan()) && (!res.parent || !res.parent.IsMan()))
@@ -117,7 +121,7 @@ modded class Weapon_Base
 
 					PlayerBase otherPlayer = PlayerBase.Cast(results[i].obj);
 
-					if (!otherPlayer && res.parent.IsMan())
+					if (!otherPlayer && res.parent && res.parent.IsMan())
 						otherPlayer = PlayerBase.Cast(res.parent);
 
 					// Allow shooting dead players to trigger shooter's combat log timer? 
@@ -144,16 +148,16 @@ modded class Weapon_Base
 				// If we sent an RPC to the server tagging any player(s) we shot at, delay the next RPC event by 3 secs to avoid spamming the server with mag dumps
 				if (sentRPC)
 				{
-					m_PauseCombatRPC = true;
-					GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(ResetCombatRPC, RPC_DELAY_TIMER, false);
+					m_ZenPauseCombatRPC = true;
+					GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(ResetZenCombatRPC, ZRPC_DELAY_TIMER, false);
 				}
 			}
 		}
 	}
 
 	// Reset RPC timer
-	private void ResetCombatRPC()
+	private void ResetZenCombatRPC()
 	{
-		m_PauseCombatRPC = false;
+		m_ZenPauseCombatRPC = false;
 	}
-};
+}

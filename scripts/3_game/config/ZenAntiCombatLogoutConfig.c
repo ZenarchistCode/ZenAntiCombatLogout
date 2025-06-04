@@ -1,8 +1,3 @@
-// RPC ids
-const static int ZEN_ANTI_COMBAT_LOG_RPC = -889614;
-const static int ZEN_ANTI_COMBAT_LOG_MSG_RPC = -889615;
-
-// TODO: Config logout messages here instead of stringtable?
 class ZenAntiCombatLogout
 {
 	// Static constant config version (is NOT saved to json)
@@ -82,4 +77,4 @@ static ZenAntiCombatLogout GetZenAntiCombatLogoutConfig()
 	}
 
 	return m_ZenAntiCombatLogout;
-};
+}

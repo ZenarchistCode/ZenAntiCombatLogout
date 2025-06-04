@@ -6,7 +6,12 @@ modded class Grenade_ChemGas
 		super.EOnContact(other, extra);
 
 		#ifdef SERVER
+		#ifdef ZENMODPACK
+		if (!ZenModEnabled("ZenAntiCombatLogout"))
+			return;
+		#endif
+
 		TriggerCombatPlayersInRadius(GetZenAntiCombatLogoutConfig().TriggerOnExplosiveRadius);
 		#endif
 	}
-};
+}

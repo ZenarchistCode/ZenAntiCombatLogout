@@ -8,7 +8,7 @@ class Zen_CombatLogTrigger extends Inventory_Base
 		SetIsHologram(true);
 
 		// Delete immediately
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DeleteSafe, 1, false);
+		GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(DeleteSafe, 1, false);
 	}
 
 	override void EEDelete(EntityAI parent)

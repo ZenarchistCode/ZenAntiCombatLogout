@@ -1,4 +1,4 @@
-// Slight modification just to notify the player that they're dead if they combat log
+//! ANTI-COMBAT LOG
 modded class LogoutMenu
 {
 	int m_KilledOnLogoutCB = -1;
@@ -20,32 +20,25 @@ modded class LogoutMenu
 		if (m_bLogoutNow)
 		{
 			m_bLogoutNow.Show(false);
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(EnableLogoutButton, 1000, false);
+			GetGame().GetCallQueue(CALL_CATEGORY_GUI).CallLater(EnableLogoutButton, 1000, false);
 		}
 
 		// Set logout message
 		if (player.WillBePunishedForCombatLogging() >= 1)
 		{
 			if (player.WillBePunishedForCombatLogging() == 3)
-			{
 				m_DescriptionText.SetText("#zen_layout_logout_dialog_note_cb"); // No penalty but extended timer
-			} else
-			if (player.WillBePunishedForCombatLogging() == 1)
-			{
-				m_DescriptionText.SetText("#zen_layout_logout_dialog_note_killed_cb"); // Dead message
-			}
 			else
-			{
+			if (player.WillBePunishedForCombatLogging() == 1)
+				m_DescriptionText.SetText("#zen_layout_logout_dialog_note_killed_cb"); // Dead message
+			else
 				m_DescriptionText.SetText("#zen_layout_logout_dialog_note_killed_cb2"); // Flare message
-			}
 
 			m_DescriptionText.SetColor(ARGB(255, 255, 0, 0)); // Set text color to red
 
-
-
 			// If player has shot at someone or been shot at, enable exit button in X secs from server config
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(EnableLogoutButton);
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(EnableLogoutButton, player.GetDisableExitButtonSecs() * 1000, false);
+			GetGame().GetCallQueue(CALL_CATEGORY_GUI).Remove(EnableLogoutButton);
+			GetGame().GetCallQueue(CALL_CATEGORY_GUI).CallLater(EnableLogoutButton, player.GetDisableExitButtonSecs() * 1000, false);
 		}
 		else
 		{
@@ -74,4 +67,4 @@ modded class LogoutMenu
 		if (m_bLogoutNow)
 			m_bLogoutNow.Show(true);
 	}
-};
+}

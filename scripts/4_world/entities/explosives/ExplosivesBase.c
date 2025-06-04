@@ -8,6 +8,11 @@ modded class ExplosivesBase
 		super.OnExplode();
 
 		#ifdef SERVER
+		#ifdef ZENMODPACK
+		if (!ZenModEnabled("ZenAntiCombatLogout"))
+			return;
+		#endif
+
 		if (!TriggerCombatLogTimer())
 			return;
 

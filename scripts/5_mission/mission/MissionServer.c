@@ -1,5 +1,7 @@
 modded class MissionServer
 {
+	static int ZEN_UNIQUE_PLAYER_ID_TRACKER_ACL;
+
 	// Used to store players who have clicked "Exit" and begun logout, but haven't yet disconnected (allows us to send them combat logout info before actual disconnect)
 	private ref map<PlayerBase, bool> m_LogoutQueueCombatInital;
 
@@ -7,7 +9,15 @@ modded class MissionServer
 	override void OnInit()
 	{
 		super.OnInit();
+
+		#ifdef ZENMODPACK
+		if (!ZenModEnabled("ZenAntiCombatLogout"))
+			return;
+		#endif
+
 		Print("[ZenAntiCombatLogout] OnInit");
+
+		ZEN_UNIQUE_PLAYER_ID_TRACKER_ACL = 0;
 
 		// Load config
 		GetZenAntiCombatLogoutConfig();
@@ -16,18 +26,17 @@ modded class MissionServer
 		m_LogoutQueueCombatInital = new map<PlayerBase, bool>;
 	}
 
-	// When mission starts, 
-	override void OnMissionStart()
-	{
-		super.OnMissionStart();
-
-		// Disable deletion of flares
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(Zen_CombatLogFlare.SetServerRestarted, 5000, false);
-	}
-
 	// Detect logout/disconnect event - check if player's combat timer has been set, if so, override default logout time
 	override void OnClientDisconnectedEvent(PlayerIdentity identity, PlayerBase player, int logoutTime, bool authFailed)
 	{
+		#ifdef ZENMODPACK
+		if (!ZenModEnabled("ZenAntiCombatLogout"))
+		{
+			super.OnClientDisconnectedEvent(identity, player, logoutTime, authFailed);
+			return;
+		}
+		#endif
+
 		int origTime = logoutTime;
 
 		// Check if player is alive and their combat logout timer is still running
@@ -49,12 +58,17 @@ modded class MissionServer
 
 		// Pass new logoutTime to super()
 		super.OnClientDisconnectedEvent(identity, player, logoutTime, authFailed);
-	};
+	}
 
 	// Detect force-disconnect (Alt+F4 or clicked Exit button)
     override void OnEvent(EventType eventTypeId, Param params)
     {
         super.OnEvent(eventTypeId, params);
+
+		#ifdef ZENMODPACK
+		if (!ZenModEnabled("ZenAntiCombatLogout"))
+			return;
+		#endif
 
         PlayerIdentity identity;
         PlayerBase player;
@@ -68,7 +82,7 @@ modded class MissionServer
 
 			identity = discoParams.param1;
 			player = PlayerBase.Cast(discoParams.param2);
-			bool logoutTimeExpired = IsCombatLogoutTimeExpired(player);
+			bool logoutTimeExpired = IsZenCombatLogoutTimeExpired(player);
 
 			// This if statement is executed when player initiates logout procedure (ie. clicks Exit button from game menu)
 			if (player && (!m_LogoutQueueCombatInital.Get(player) || !m_LogoutQueueCombatInital.Contains(player)))
@@ -137,17 +151,35 @@ modded class MissionServer
 		}
     }
 
+	override void InvokeOnConnect(PlayerBase player, PlayerIdentity identity) 
+	{
+		super.InvokeOnConnect(player, identity);
+
+		#ifdef ZENMODPACK
+		if (!ZenModEnabled("ZenAntiCombatLogout"))
+			return;
+		#endif
+
+		// Only do this if ZenModPack is not loaded - otherwise ZenModPack has its own player ID tracker code so no need to double-up on code here.
+		player.SetZenACL_PlayerUID(ZEN_UNIQUE_PLAYER_ID_TRACKER_ACL++);
+	}
+
 	// If the player has officially disconnected, remove them from our pre-logout queue
 	override void InvokeOnDisconnect(PlayerBase player)
 	{
 		super.InvokeOnDisconnect(player);
+
+		#ifdef ZENMODPACK
+		if (!ZenModEnabled("ZenAntiCombatLogout"))
+			return;
+		#endif
 
 		if (player)
 			m_LogoutQueueCombatInital.Remove(player);
 	}
 
 	// Check if combat logout timer has expired for given player
-	bool IsCombatLogoutTimeExpired(PlayerBase player)
+	bool IsZenCombatLogoutTimeExpired(PlayerBase player)
 	{
 		if (!player)
 			return true;
@@ -167,13 +199,20 @@ modded class MissionServer
 	// Don't penalize player for combat logging due to server restart/shutdown/admin kick etc. Otherwise will mass murder everyone who had a fight right before a restart
 	override bool ShouldPlayerBeKilled(PlayerBase player)
 	{
+		#ifdef ZENMODPACK
+		if (!ZenModEnabled("ZenAntiCombatLogout"))
+		{
+			return super.ShouldPlayerBeKilled(player);
+		}
+		#endif
+
 		bool killPlayer = super.ShouldPlayerBeKilled(player);
 
 		if (killPlayer)
 			return true;
 
 		// If player has been flagged to die for combat logging and their logout timer has not expired, fuck em
-		if (player.WillBePunishedForCombatLogging() == 1 && !IsCombatLogoutTimeExpired(player))
+		if (player.WillBePunishedForCombatLogging() == 1 && !IsZenCombatLogoutTimeExpired(player))
 		{
 			// If player was kicked off for a server restart, don't kill them as that's going to kill pretty everyone who was in a gunfight leading up to the restart
 			switch (player.GetKickOffReason())
