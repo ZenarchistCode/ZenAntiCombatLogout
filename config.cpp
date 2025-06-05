@@ -34,20 +34,34 @@ class CfgMods
 		class defs
 		{
 			class gameScriptModule
-			{
+            {
 				value = "";
-				files[] = { "ZenAntiCombatLogout/Scripts/3_Game" };
-			};
+                files[]=
+				{
+					"ZenAntiCombatLogout/scripts/common",
+					"ZenAntiCombatLogout/scripts/3_game"
+				};
+            };
+			
 			class worldScriptModule
-			{
-				value = "";
-				files[] = { "ZenAntiCombatLogout/scripts/4_world" };
-			};
-			class missionScriptModule
-			{
-				value = "";
-				files[] = { "ZenAntiCombatLogout/scripts/5_mission" };
-			};
+            {
+                value="";
+                files[]=
+				{ 
+					"ZenAntiCombatLogout/scripts/common",
+					"ZenAntiCombatLogout/scripts/4_world" 
+				};
+            };
+			
+	        class missionScriptModule
+            {
+                value="";
+                files[]=
+				{
+					"ZenAntiCombatLogout/scripts/common",
+					"ZenAntiCombatLogout/scripts/5_mission" 
+				};
+            };
 		}
 	};
 };
