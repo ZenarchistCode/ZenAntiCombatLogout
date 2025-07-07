@@ -64,7 +64,7 @@ modded class LogoutMenu
 	// Enable the Exit button
 	private void EnableLogoutButton()
 	{
-		if (m_bLogoutNow)
+		if (GetGame() && m_bLogoutNow)
 			m_bLogoutNow.Show(true);
 	}
 }

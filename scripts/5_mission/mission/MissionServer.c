@@ -1,7 +1,5 @@
 modded class MissionServer
 {
-	static int ZEN_UNIQUE_PLAYER_ID_TRACKER_ACL;
-
 	// Used to store players who have clicked "Exit" and begun logout, but haven't yet disconnected (allows us to send them combat logout info before actual disconnect)
 	private ref map<PlayerBase, bool> m_LogoutQueueCombatInital;
 
@@ -16,8 +14,6 @@ modded class MissionServer
 		#endif
 
 		Print("[ZenAntiCombatLogout] OnInit");
-
-		ZEN_UNIQUE_PLAYER_ID_TRACKER_ACL = 0;
 
 		// Load config
 		GetZenAntiCombatLogoutConfig();
@@ -150,19 +146,6 @@ modded class MissionServer
 				m_LogoutQueueCombatInital.Remove(player);
 		}
     }
-
-	override void InvokeOnConnect(PlayerBase player, PlayerIdentity identity) 
-	{
-		super.InvokeOnConnect(player, identity);
-
-		#ifdef ZENMODPACK
-		if (!ZenModEnabled("ZenAntiCombatLogout"))
-			return;
-		#endif
-
-		// Only do this if ZenModPack is not loaded - otherwise ZenModPack has its own player ID tracker code so no need to double-up on code here.
-		player.SetZenACL_PlayerUID(ZEN_UNIQUE_PLAYER_ID_TRACKER_ACL++);
-	}
 
 	// If the player has officially disconnected, remove them from our pre-logout queue
 	override void InvokeOnDisconnect(PlayerBase player)

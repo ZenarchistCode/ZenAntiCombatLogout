@@ -46,7 +46,7 @@ modded class Weapon_Base
 		if (m_ZenPauseCombatRPC)
 			return;
 
-		// If weapon is not fired by our player, stop here.
+		// If weapon is not fired by our client player, stop here.
 		PlayerBase player = PlayerBase.Cast(GetHierarchyRootPlayer());
 		if (!player || !player.IsControlledPlayer())
 			return;
@@ -104,7 +104,8 @@ modded class Weapon_Base
 				{
 					RaycastRVResult res = results.Get(i);
 
-					/* //DEBUG
+					/*
+					//DEBUG
 					EntityAI entity = EntityAI.Cast(res.obj);
 					if (entity)
 						entity = EntityAI.Cast(res.parent);
@@ -113,7 +114,8 @@ modded class Weapon_Base
 						continue;
 
 					ZenFunctions.DebugMessage("ENTITY=" + entity.GetType());
-					//END DEBUG */ 
+					//END DEBUG
+					*/
 
 					// Skip any objects that are not human
 					if ((results[i].obj && !results[i].obj.IsMan()) && (!res.parent || !res.parent.IsMan()))
@@ -128,6 +130,10 @@ modded class Weapon_Base
 					// Might assist with meta gaming (ie. shooting up a building and then checking logout timer to see if someone is still alive inside)
 					if (otherPlayer /* && otherPlayer.IsAlive()*/)
 					{
+						//ZenFunctions.DebugMessage("Shot @ " + otherPlayer.GetType() + " - id=" + otherPlayer.GetZenACL_PlayerUID() + " vanillaID=" + otherPlayer.GetID() + " myID=" + player.GetID());
+						if (otherPlayer.IsControlledPlayer())
+							continue; // It's me! It's me! Smart ass motherfucker...
+
 						// Raycast with a 5m radius can detect the same object multiple times, so filter results array
 						skip = false;
 						for (int x = 0; x < informedPlayers.Count(); x++)
@@ -149,7 +155,7 @@ modded class Weapon_Base
 				if (sentRPC)
 				{
 					m_ZenPauseCombatRPC = true;
-					GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(ResetZenCombatRPC, ZRPC_DELAY_TIMER, false);
+					GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(ResetZenCombatRPC, ZRPC_DELAY_TIMER, false);
 				}
 			}
 		}
@@ -159,5 +165,13 @@ modded class Weapon_Base
 	private void ResetZenCombatRPC()
 	{
 		m_ZenPauseCombatRPC = false;
+	}
+
+	void ~Weapon_Base()
+	{
+		if (GetGame() && GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM))
+		{
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(ResetZenCombatRPC);
+		}
 	}
 }

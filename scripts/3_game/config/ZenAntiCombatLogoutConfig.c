@@ -13,6 +13,7 @@ class ZenAntiCombatLogout
 	int DisableExitButtonSecs = 5; // How long to disable the Exit button when logging out after combat
 	bool NotifyPlayerOfPenalty = true; // Whether or not to notify the player of the penalty for combat logging
 	bool TriggerOnGunshot = false; // Whether or not to trigger the combat log timer for simply firing your gun (hunting, raiding etc)
+	bool TriggerForExpansionAI = false; // Whether or not to trigger combat log timer on AI
 	int TriggerOnBulletImpactRadius = 0; // // Experimental (set to 0 to disable) - Radius around bullet impact to detect and flag players for engaging in combat
 	int TriggerOnExplosiveRadius = 30; // Radius around explosions to detect and flag players for engaging in combat (set to 0 to disable)
 	int DropFlareOnPlayer = 0; // Whether or not to drop a flare on a player (0 = disabled, 1 = when they logout before timer, 2 = when they are killed for combat logging)

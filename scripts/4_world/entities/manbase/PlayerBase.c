@@ -4,25 +4,6 @@ modded class PlayerBase
 	private bool m_ZenKillPlayerForCombatLogging = false; // Server-side flag - if true, player will be killed if they disconnect before timeout
 	private int m_ZenWillBePunishedForCombatLogging = 0; // Server & client flag - if true, logout message on client will reflect the severity of their situation
 	private int m_ZenDisableExitButtonSecs = 5; // How long to disable the exit button (client-side)
-	private int m_ZenACL_PlayerUID;
-
-	override void Init()
-	{
-		super.Init();
-
-		RegisterNetSyncVariableInt("m_ZenACL_PlayerUID");
-	}
-
-	void SetZenACL_PlayerUID(int id)
-	{
-		m_ZenACL_PlayerUID = id;
-		SetSynchDirty();
-	}
-
-	int GetZenACL_PlayerUID()
-	{
-		return m_ZenACL_PlayerUID;
-	}
 
 	PlayerBase GetPlayerByZenACL_UID(int id)
 	{
@@ -32,7 +13,7 @@ modded class PlayerBase
 		foreach (Man playerMan : players)
 		{
 			PlayerBase player = PlayerBase.Cast(playerMan);
-			if (player != NULL && player.GetZenACL_PlayerUID() == id)
+			if (player != NULL && player.GetID() == id)
 			{
 				return player;
 			}
@@ -106,7 +87,7 @@ modded class PlayerBase
 	// (Client-side) Sends an RPC to the server notifying it that we shot at some poor fucker
 	void InformServerThatWeShotAt(notnull PlayerBase player)
 	{
-		Param1<int> params = new Param1<int>(player.GetZenACL_PlayerUID());
+		Param1<int> params = new Param1<int>(player.GetID());
 		GetGame().RPCSingleParam(this, ZenAntiCombatRPCs.ANTI_COMBAT_LOG_RPC, params, true);
 	}
 
@@ -146,15 +127,38 @@ modded class PlayerBase
 			PlayerBase shooter = PlayerBase.Cast(GetGame().GetObjectByNetworkId(lowBits, highBits));
 			PlayerBase victim = GetPlayerByZenACL_UID(antiCombatLog_ServerParams.param1);
 
-			// If victim exists and they're not dead, reset their combat logout timer.
-			if (victim && victim.GetIdentity() && victim.IsAlive())
+			if (!victim || !shooter)
+				return;
+
+			if (victim == shooter)
+				return;
+
+			#ifdef EXPANSIONMODAI
+			if (victim.IsAI())
 			{
-				victim.SetCombatLogTimer(shooter, victim);
+				if (!GetZenAntiCombatLogoutConfig().TriggerForExpansionAI)
+				{
+					return;
+				}
 			}
+			#endif
 
 			if (shooter && shooter.IsAlive())
 			{
 				shooter.SetCombatLogTimer(shooter, victim);
+			}
+
+			// If victim exists and they're not dead and they're not AI, reset their combat logout timer too.
+			if (victim && victim.GetIdentity() && victim.IsAlive())
+			{
+				#ifdef EXPANSIONMODAI
+				if (victim.IsAI())
+				{
+					return;
+				}
+				#endif
+
+				victim.SetCombatLogTimer(shooter, victim);
 			}
 		}
     }
@@ -177,6 +181,16 @@ modded class PlayerBase
 		#ifdef ZENMODPACK
 		if (!ZenModEnabled("ZenAntiCombatLogout"))
 			return;
+		#endif
+
+		#ifdef EXPANSIONMODAI
+		if (IsAI())
+		{
+			if (!GetZenAntiCombatLogoutConfig().TriggerForExpansionAI)
+			{
+				return;
+			}
+		}
 		#endif
 
 		PlayerBase attacker;
