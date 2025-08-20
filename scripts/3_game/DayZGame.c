@@ -14,4 +14,4 @@ modded class DayZGame
 			GetGame().CreateObjectEx("Zen_CombatLogTrigger", pos, ECE_PLACE_ON_SURFACE);
 		#endif
 	}
-};
+}

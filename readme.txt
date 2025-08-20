@@ -70,6 +70,12 @@ This mod must be installed on both the server & client.
 
 Repack & Source Code:
 
-You can repack this mod if you like, and do anything else you want with it for that matter. The source code is on my GitHub at www.zenarchist.io
+You can repack this mod if you like, and do anything else you want with it for that matter. The source code is on my GitHub at www.zenarchist.com
+
+Buy Me A Coffee:
+
+All my mods are free and open source, but it takes an enormous amount of time to put some of these mods together. If I've helped you out, please consider helping me buy my next coffee! I don't expect it, but I very much appreciate it.
+
+https://buymeacoffee.com/zenarchist
 
 Enjoy!
