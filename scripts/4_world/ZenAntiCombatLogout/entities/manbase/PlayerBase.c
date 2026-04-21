@@ -8,7 +8,7 @@ modded class PlayerBase
 	PlayerBase GetPlayerByZenACL_UID(int id)
 	{
 		array<Man> players = new array<Man>;
-		GetGame().GetPlayers(players);
+		g_Game.GetPlayers(players);
 		
 		foreach (Man playerMan : players)
 		{
@@ -32,7 +32,7 @@ modded class PlayerBase
 	void InformPlayerOfCombatLogout(int willBeKilled)
 	{
 		Param2<int, int> params = new Param2<int, int>(willBeKilled, GetZenAntiCombatLogoutConfig().DisableExitButtonSecs);
-		GetGame().RPCSingleParam(this, ZenAntiCombatRPCs.ANTI_COMBAT_LOG_MSG_RPC, params, true, GetIdentity());
+		g_Game.RPCSingleParam(this, ZenAntiCombatRPCs.ANTI_COMBAT_LOG_MSG_RPC, params, true, GetIdentity());
 		m_ZenWillBePunishedForCombatLogging = willBeKilled;
 	}
 
@@ -43,32 +43,39 @@ modded class PlayerBase
 	}
 
 	// Stores who shot at who first to track the aggressor in combat <SteamID, AggressorStatus>
-	ref map<string, bool> m_ShotAtUsFirst = new map<string, bool>;
+	ref map<string, bool> m_ZenShotAtUsFirst = new map<string, bool>;
 
 	// Reset combat log timer
 	void SetCombatLogTimer(PlayerBase attacker = NULL, PlayerBase victim = NULL)
 	{
+		#ifdef EXPANSIONMODAI
+		if (IsAI())
+		{
+			return;
+		}
+		#endif
+		
 		// Do we have both a victim and an attacker in this altercation?
 		if (attacker != victim && victim != NULL && attacker != NULL)
 		{
 			//! On first instance of assault, attacker is presumed the aggressor, and victim is presumed innocent. 
 			//! Not always the case but whatever. Not gonna track who aimed at who first or who talked shit first.
 			//! Mainly used for situations where 'estimating' who started the fight is ok, like integrations with ExpansionAI guards.
-			if (!victim.m_ShotAtUsFirst.Contains(attacker.GetCachedID())) 
+			if (!victim.m_ZenShotAtUsFirst.Contains(attacker.GetCachedID())) 
 			{
-				attacker.m_ShotAtUsFirst.Set(victim.GetCachedID(), false);
-				victim.m_ShotAtUsFirst.Set(attacker.GetCachedID(), true);
+				attacker.m_ZenShotAtUsFirst.Set(victim.GetCachedID(), false);
+				victim.m_ZenShotAtUsFirst.Set(attacker.GetCachedID(), true);
 			}
 		}
 
-		m_ZenCombatLogTimer = GetGame().GetTime() + (GetZenAntiCombatLogoutConfig().CombatLogoutSecs * 1000);
+		m_ZenCombatLogTimer = g_Game.GetTime() + (GetZenAntiCombatLogoutConfig().CombatLogoutSecs * 1000);
 	}
 
 	// Check if we started combat with the given player
-	bool DidWeStartCombatWith(notnull PlayerBase enemy)
+	override bool Zen_DidWeStartCombatWith(notnull PlayerBase enemy)
 	{
 		bool weShotFirst = false;
-		enemy.m_ShotAtUsFirst.Find(GetCachedID(), weShotFirst);
+		enemy.m_ZenShotAtUsFirst.Find(GetCachedID(), weShotFirst);
 		return weShotFirst;
 	}
 
@@ -88,14 +95,14 @@ modded class PlayerBase
 	void InformServerThatWeShotAt(notnull PlayerBase player)
 	{
 		Param1<int> params = new Param1<int>(player.GetID());
-		GetGame().RPCSingleParam(this, ZenAntiCombatRPCs.ANTI_COMBAT_LOG_RPC, params, true);
+		g_Game.RPCSingleParam(this, ZenAntiCombatRPCs.ANTI_COMBAT_LOG_RPC, params, true);
 	}
 
 	override void OnRPC(PlayerIdentity sender, int rpc_type, ParamsReadContext ctx)
     {
         super.OnRPC(sender, rpc_type, ctx);
 
-		#ifdef ZENMODPACK
+		#ifdef ZenModPack
 		if (!ZenModEnabled("ZenAntiCombatLogout"))
 			return;
 		#endif
@@ -121,10 +128,7 @@ modded class PlayerBase
 			if (!ctx.Read(antiCombatLog_ServerParams))
 				return;
 
-			// Reset our combat logout timer too.
-			int highBits, lowBits;
-			GetGame().GetPlayerNetworkIDByIdentityID(sender.GetPlayerId(), lowBits, highBits);
-			PlayerBase shooter = PlayerBase.Cast(GetGame().GetObjectByNetworkId(lowBits, highBits));
+			PlayerBase shooter = PlayerBase.Cast(sender.GetPlayer());
 			PlayerBase victim = GetPlayerByZenACL_UID(antiCombatLog_ServerParams.param1);
 
 			if (!victim || !shooter)
@@ -143,6 +147,7 @@ modded class PlayerBase
 			}
 			#endif
 
+			// Reset our combat logout timer too.
 			if (shooter && shooter.IsAlive())
 			{
 				shooter.SetCombatLogTimer(shooter, victim);
@@ -151,6 +156,23 @@ modded class PlayerBase
 			// If victim exists and they're not dead and they're not AI, reset their combat logout timer too.
 			if (victim && victim.GetIdentity() && victim.IsAlive())
 			{
+				// GetSimulationTimeStamp < 10000 is up to approximately 5-6 minutes since login
+				if (StatGet(AnalyticsManagerServer.STAT_PLAYTIME) > 500 && GetSimulationTimeStamp() < 10000 && GetZenAntiCombatLogoutConfig().DiscordWebhooks.Count() > 0 && !GetZenAntiCombatLogoutConfig().DiscordWebhooks.Get(0).Contains("OnlyWorksIfZenDiscordAPIPresent"))
+				{
+					string printMsg = GetCachedName() + " " + GetCachedID() + " MAY have engaged in potential alt-account PVP - they attacked " + victim.GetCachedName() + " " + victim.GetCachedID() + " within ~5 minutes of logging in.";
+					Print("[ZenAntiCombatLogout] " + printMsg);
+					
+					#ifdef ZenDiscordAPI
+					string title = "ZenAntiCombatLogout | " + g_Game.GetWorldName();
+					ZenDiscordMessage msg = new ZenDiscordMessage(title);
+					msg.SetTitle(title);
+					msg.SetMessage(printMsg);
+					msg.SetColor(255, 160, 0);
+					msg.AddWebhooks(GetZenAntiCombatLogoutConfig().DiscordWebhooks);
+					GetZenDiscordAPI().SendMessage(msg);
+					#endif
+				}
+
 				#ifdef EXPANSIONMODAI
 				if (victim.IsAI())
 				{
@@ -167,7 +189,7 @@ modded class PlayerBase
 	{
 		super.EEHitBy(damageResult, damageType, source, component, dmgZone, ammo, modelPos, speedCoef);
 
-		#ifdef ZENMODPACK
+		#ifdef ZenModPack
 		if (!ZenModEnabled("ZenAntiCombatLogout"))
 			return;
 		#endif
@@ -178,7 +200,7 @@ modded class PlayerBase
 
 	void HandleZenAntiCombatLog(TotalDamageResult damageResult, int damageType, EntityAI source, int component, string dmgZone, string ammo, vector modelPos, float speedCoef)
 	{
-		#ifdef ZENMODPACK
+		#ifdef ZenModPack
 		if (!ZenModEnabled("ZenAntiCombatLogout"))
 			return;
 		#endif

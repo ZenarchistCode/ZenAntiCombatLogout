@@ -8,11 +8,11 @@ modded class LogoutMenu
 	{
 		super.UpdateInfo();
 
-		if (!GetGame())
+		if (!g_Game)
 			return;
 
 		// Get player
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		if (!player)
 			return;
 
@@ -20,7 +20,7 @@ modded class LogoutMenu
 		if (m_bLogoutNow)
 		{
 			m_bLogoutNow.Show(false);
-			GetGame().GetCallQueue(CALL_CATEGORY_GUI).CallLater(EnableLogoutButton, 1000, false);
+			g_Game.GetCallQueue(CALL_CATEGORY_GUI).CallLater(EnableLogoutButton, 1000, false);
 		}
 
 		// Set logout message
@@ -37,8 +37,8 @@ modded class LogoutMenu
 			m_DescriptionText.SetColor(ARGB(255, 255, 0, 0)); // Set text color to red
 
 			// If player has shot at someone or been shot at, enable exit button in X secs from server config
-			GetGame().GetCallQueue(CALL_CATEGORY_GUI).Remove(EnableLogoutButton);
-			GetGame().GetCallQueue(CALL_CATEGORY_GUI).CallLater(EnableLogoutButton, player.GetDisableExitButtonSecs() * 1000, false);
+			g_Game.GetCallQueue(CALL_CATEGORY_GUI).Remove(EnableLogoutButton);
+			g_Game.GetCallQueue(CALL_CATEGORY_GUI).CallLater(EnableLogoutButton, player.GetDisableExitButtonSecs() * 1000, false);
 		}
 		else
 		{
@@ -53,7 +53,7 @@ modded class LogoutMenu
 		super.Update(timeslice);
 
 		// Check player combat log status
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		if (player && m_KilledOnLogoutCB != player.WillBePunishedForCombatLogging())
 		{
 			UpdateInfo();
@@ -64,7 +64,7 @@ modded class LogoutMenu
 	// Enable the Exit button
 	private void EnableLogoutButton()
 	{
-		if (GetGame() && m_bLogoutNow)
+		if (g_Game && m_bLogoutNow)
 			m_bLogoutNow.Show(true);
 	}
 }

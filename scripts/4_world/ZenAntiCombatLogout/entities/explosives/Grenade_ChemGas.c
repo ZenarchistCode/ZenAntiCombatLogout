@@ -6,7 +6,7 @@ modded class Grenade_ChemGas
 		super.EOnContact(other, extra);
 
 		#ifdef SERVER
-		#ifdef ZENMODPACK
+		#ifdef ZenModPack
 		if (!ZenModEnabled("ZenAntiCombatLogout"))
 			return;
 		#endif

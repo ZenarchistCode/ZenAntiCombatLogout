@@ -8,7 +8,7 @@ modded class ExplosivesBase
 		super.OnExplode();
 
 		#ifdef SERVER
-		#ifdef ZENMODPACK
+		#ifdef ZenModPack
 		if (!ZenModEnabled("ZenAntiCombatLogout"))
 			return;
 		#endif
@@ -52,7 +52,7 @@ modded class ExplosivesBase
 	{
 		return true;
 	}
-};
+}
 
 // Disable combat trigger for smoke grenades
 modded class SmokeGrenadeBase
@@ -61,4 +61,4 @@ modded class SmokeGrenadeBase
 	{
 		return false;
 	}
-};
+}

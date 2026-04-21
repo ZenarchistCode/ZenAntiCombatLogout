@@ -10,7 +10,7 @@ class Zen_CombatLogFlare extends Roadflare
 		SetLifetime(GetZenAntiCombatLogoutConfig().CombatLogoutSecs);
 
 		// 1 second after creation, ignite flare
-		GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(IgniteCombatFlare, 1000, false);
+		g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(IgniteCombatFlare, 1000, false);
 	}
 
 	// Ignite flare and stand it up

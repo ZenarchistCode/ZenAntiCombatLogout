@@ -5,7 +5,12 @@ class CfgPatches
 		units[]={};
 		weapons[]={};
 		requiredVersion=0.1;
-		requiredAddons[] = { "DZ_Data" };
+		requiredAddons[] = 
+		{ 
+			"DZ_Data",
+            "DZ_Scripts",
+			"ZenModCore"
+		};
 	};
 };
 
@@ -13,18 +18,15 @@ class CfgMods
 {
 	class ZenAntiCombatLogout
 	{
-		dir="ZenAntiCombatLogout";
-		picture=""; 
-		action="";
-		hideName=1;
-		hidePicture=1;
-		name="ZenAntiCombatLogout";
-		credits=""; 
-		author="Zenarchist";
-		authorID="0";  
-		version="1.0";
-		extra=0;
-		type="mod";
+		author = "Zenarchist";
+		type = "mod";
+		storageVersion = 1; // CF storage
+        dependencies[]=
+		{
+			"Game",
+			"World",
+			"Mission"
+		};
 		dependencies[] =
 		{
 			"Game",
@@ -38,7 +40,6 @@ class CfgMods
 				value = "";
                 files[]=
 				{
-					"ZenAntiCombatLogout/scripts/common",
 					"ZenAntiCombatLogout/scripts/3_game"
 				};
             };
@@ -47,8 +48,7 @@ class CfgMods
             {
                 value="";
                 files[]=
-				{ 
-					"ZenAntiCombatLogout/scripts/common",
+				{
 					"ZenAntiCombatLogout/scripts/4_world" 
 				};
             };
@@ -58,7 +58,6 @@ class CfgMods
                 value="";
                 files[]=
 				{
-					"ZenAntiCombatLogout/scripts/common",
 					"ZenAntiCombatLogout/scripts/5_mission" 
 				};
             };

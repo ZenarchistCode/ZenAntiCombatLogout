@@ -3,12 +3,8 @@ class Zen_CombatLogTrigger extends Inventory_Base
 {
 	void Zen_CombatLogTrigger()
 	{
-		// Set invisible
-		SetPilotLight(true);
-		SetIsHologram(true);
-
 		// Delete immediately
-		GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(DeleteSafe, 1, false);
+		g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(DeleteSafe, 1, false);
 	}
 
 	override void EEDelete(EntityAI parent)
@@ -28,13 +24,16 @@ class Zen_CombatLogTrigger extends Inventory_Base
 		if (radius <= 0)
 			return;
 
+		vector ourRealPos = GetPosition();
+		ourRealPos[1] = g_Game.SurfaceY(ourRealPos[0], ourRealPos[2]);
+
 		// Scan player list and check distance
 		array<Man> players = new array<Man>;
 		g_Game.GetWorld().GetPlayerList(players);
 		PlayerBase pb;
 		for (int x = 0; x < players.Count(); x++)
 		{
-			if (vector.Distance(players.Get(x).GetPosition(), GetPosition()) < radius)
+			if (vector.Distance(players.Get(x).GetPosition(), ourRealPos) < radius)
 			{
 				pb = PlayerBase.Cast(players.Get(x));
 				pb.SetCombatLogTimer();

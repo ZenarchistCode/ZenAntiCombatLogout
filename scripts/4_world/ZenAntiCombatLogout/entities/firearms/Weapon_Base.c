@@ -16,7 +16,7 @@ modded class Weapon_Base
 	{
 		super.OnFire(muzzle_index);
 
-		#ifdef ZENMODPACK
+		#ifdef ZenModPack
 		if (!ZenModEnabled("ZenAntiCombatLogout"))
 			return;
 		#endif
@@ -36,7 +36,7 @@ modded class Weapon_Base
 		#endif
 
 		// Check on next frame if a player was shot at
-		GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(DetectPlayerShot, 1, false);
+		g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).Call(DetectPlayerShot);
 	}
 
 	// Detect if a player was shot at
@@ -71,7 +71,7 @@ modded class Weapon_Base
 		}
 		else
 		{
-			direction = GetGame().GetCurrentCameraDirection(); // Exception for freelook. Much better this way!
+			direction = g_Game.GetCurrentCameraDirection(); // Exception for freelook. Much better this way!
 		}
 
 		int idx = player.GetBoneIndexByName("Neck");
@@ -155,7 +155,7 @@ modded class Weapon_Base
 				if (sentRPC)
 				{
 					m_ZenPauseCombatRPC = true;
-					GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(ResetZenCombatRPC, ZRPC_DELAY_TIMER, false);
+					g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(ResetZenCombatRPC, ZRPC_DELAY_TIMER, false);
 				}
 			}
 		}
@@ -169,9 +169,9 @@ modded class Weapon_Base
 
 	void ~Weapon_Base()
 	{
-		if (GetGame() && GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM))
+		if (g_Game && g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM))
 		{
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(ResetZenCombatRPC);
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(ResetZenCombatRPC);
 		}
 	}
 }
